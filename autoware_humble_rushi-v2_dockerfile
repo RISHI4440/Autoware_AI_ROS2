@@ -1,0 +1,93 @@
+# syntax=docker/dockerfile:1
+FROM ros:humble
+
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-lc"]
+
+# -------------------------
+# 0) Base build dependencies
+# -------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl wget ca-certificates gnupg lsb-release \
+    build-essential cmake pkg-config \
+    python3-pip python3-venv python3-colcon-common-extensions python3-rosdep python3-vcstool \
+    python3-argcomplete \
+    # helpful tools
+    nano less tmux \
+    # common ROS/Autoware deps
+    libpcl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# rosdep init/update (safe if already initialized)
+RUN rosdep init 2>/dev/null || true && rosdep update
+
+# -------------------------
+# 1) CARLA Python API (cp310)
+# -------------------------
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install "carla==0.9.15"
+
+# -------------------------
+# 2) Create workspace
+# -------------------------
+WORKDIR /root/autoware
+RUN mkdir -p /root/autoware/src
+
+# -------------------------
+# 3) Fetch Autoware source (repos)
+#    NOTE: This uses Autoware's CURRENT repos file location.
+#    If it changes in the future, update AUTOWARE_REPOS_URL.
+# -------------------------
+ARG AUTOWARE_REPOS_URL="https://raw.githubusercontent.com/autowarefoundation/autoware/main/autoware.repos"
+RUN wget -O /root/autoware/autoware.repos "${AUTOWARE_REPOS_URL}" && \
+    vcs import /root/autoware/src < /root/autoware/autoware.repos
+
+# -------------------------
+# 4) Add CARLA ros-bridge (with carla_msgs submodule)
+# -------------------------
+WORKDIR /root/autoware/src
+RUN git clone --recurse-submodules https://github.com/carla-simulator/ros-bridge.git
+
+# Patch required CARLA version (your v2 fix)
+RUN echo "0.9.15" > /root/autoware/src/ros-bridge/carla_ros_bridge/src/carla_ros_bridge/CARLA_VERSION
+
+# -------------------------
+# 5) Skip PACMod (sim-only) (your v2 choice)
+# -------------------------
+RUN touch /root/autoware/src/vehicle/external/pacmod_interface/COLCON_IGNORE || true
+
+# -------------------------
+# 6) Apply build fixes you used (your v2 fixes)
+#    a) nebula angles include fix
+#    b) grid_map eigen_plugins include fix (symlink folder)
+# -------------------------
+RUN sed -i 's#<angles/angles/angles.h>#<angles/angles.h>#g' \
+    /root/autoware/src/sensor_component/external/nebula/nebula_decoders/include/nebula_decoders/nebula_decoders_velodyne/decoders/velodyne_scan_decoder.hpp || true
+
+RUN mkdir -p /opt/ros/humble/include/grid_map_core/eigen_plugins && \
+    ln -sf /opt/ros/humble/include/grid_map_core/grid_map_core/eigen_plugins/*.hpp \
+           /opt/ros/humble/include/grid_map_core/eigen_plugins/ || true
+
+# -------------------------
+# 7) Install dependencies with rosdep
+# -------------------------
+WORKDIR /root/autoware
+RUN apt-get update && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# -------------------------
+# 8) Build Autoware + ros-bridge packages
+#    - Use Release for speed/runtime
+# -------------------------
+RUN source /opt/ros/humble/setup.bash && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+# -------------------------
+# 9) Convenience: auto-source environment
+# -------------------------
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
+    echo "source /root/autoware/install/setup.bash" >> /root/.bashrc
+
+CMD ["bash"]
+
