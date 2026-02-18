@@ -21,3 +21,20 @@ ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=<carla_container_n
 eg
 ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=determined_heyrovsky  port:=2000
 
+
+
+OPTION B :-> connect via CARLA container IP
+
+On the host, get CARLA container IP:
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containers_name>
+
+eg.
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' carla_build_rushi
+172.17.0.5
+
+inside Autoware container run:
+
+ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=<carla_ip> port:=2000 timeout:=10000
+
+eg.
+ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=172.17.0.5 port:=2000 timeout:=10000
