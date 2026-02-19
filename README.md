@@ -53,18 +53,18 @@ ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=172.17.0.5 port:=2
 # ***** Note when running docker image for the first time if you ran into an issue ROS2 not found please follow these steps ***
 # ROS 2 NOT FOUND
 
-Whats happing -> when we starte fresh shell inside the running containter it does NOT automatically source ROS unless irs in ".bashrc" or we manually course it. to get around this
+Whats happing -> when we start a fresh shell inside the running containter it does NOT automatically source ROS unless its in ".bashrc" or we manually source it. to get around this
 
 1) Inside autoware_sim run:
      echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
       echo 'source ~/autoware/install/setup.bash' >> ~/.bashrc
 
-3) Get into the continer
+2) Get into the continer
    docker exec -it autoware_sim bash
 
 - ROS will already be sourced.
 
-5) quick CARLA connectivity test + run bridge (inside autoware_sim)
+3) quick CARLA connectivity test + run bridge (inside autoware_sim)
 
   timeout 2 bash -c "</dev/tcp/localhost/2000" && echo "CARLA port OK" || echo "CARLA port FAIL"
 
