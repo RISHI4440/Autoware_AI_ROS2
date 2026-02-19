@@ -1,7 +1,10 @@
 
 CARLA server = 0.9.15 (external)
+
 Python API = 0.9.15 (cp310)
+
 Bridge patched to 0.9.15
+
 ROS 2 Humble using Python 3.10
 
 
@@ -58,7 +61,8 @@ Whats happing -> when we starte fresh shell inside the running containter it doe
 
 3) Get into the continer
    docker exec -it autoware_sim bash
-# ROS will already be sourced.
+
+- ROS will already be sourced.
 
 5) quick CARLA connectivity test + run bridge (inside autoware_sim)
 
@@ -73,7 +77,7 @@ ros2 launch carla_ros_bridge carla_ros_bridge.launch.py host:=localhost port:=20
 
 
 
-# Issures Resolved 
+# Issues Resolved 
 
 1) CARLA Python version mismatch
 
@@ -99,7 +103,6 @@ ROS 2 Humble = Python 3.10
 
 rclpy C extensions are compiled for Python 3.10
 
-
-# Version mismatch between CARLA server, CARLA Python API, and ROS bridge. (resolved)
+ Version mismatch between CARLA server, CARLA Python API, and ROS bridge. (resolved)
 
 
