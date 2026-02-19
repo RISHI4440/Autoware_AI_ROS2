@@ -64,8 +64,10 @@ Whats happing -> when we start a fresh shell inside the running containter it do
 
 - ROS will already be sourced.
 
-3) quick CARLA connectivity test + run bridge (inside autoware_sim)
+3) quick CARLA connectivity test + run bridge
 
+   inside autoware_sim container run
+   
   timeout 2 bash -c "</dev/tcp/localhost/2000" && echo "CARLA port OK" || echo "CARLA port FAIL"
 
 If it says OK, launch
